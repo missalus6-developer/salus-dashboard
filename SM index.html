@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salus System Master</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f8; min-height: 100vh; }
+    .screen { display: none !important; }
+    .screen.active { display: block !important; }
+    #login-screen.active { display: flex !important; }
+
+    #login-screen {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a237e 0%, #283593 55%, #1565c0 100%);
+      align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: #fff; border-radius: 16px;
+      padding: 3rem 2.4rem; width: 370px; text-align: center;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+    }
+    .login-logo {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: #1a237e; display: flex; align-items: center;
+      justify-content: center; margin: 0 auto 1.2rem;
+      font-size: 30px; color: #fff; font-weight: 800;
+    }
+    .login-box h2 { font-size: 22px; color: #1a237e; margin-bottom: 3px; font-weight: 700; }
+    .login-box .sub { font-size: 13px; color: #999; margin-bottom: 1.8rem; }
+    .login-box input {
+      width: 100%; padding: 12px 15px; border: 1.5px solid #ddd;
+      border-radius: 9px; font-size: 14px; margin-bottom: 13px; outline: none;
+      transition: border 0.2s; color: #333;
+    }
+    .login-box input:focus { border-color: #1a237e; }
+    .btn-login {
+      width: 100%; padding: 13px; background: #1a237e; color: #fff;
+      border: none; border-radius: 9px; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-login:hover { background: #283593; }
+    .err { color: #c62828; font-size: 12px; margin-bottom: 10px; display: none; }
+
+    .topbar {
+      background: #1a237e; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 24px; position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .topbar-logo {
+      width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800;
+    }
+    .topbar-title { font-size: 17px; font-weight: 700; }
+    .topbar-sub { font-size: 11px; opacity: 0.75; margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-user { font-size: 13px; opacity: 0.85; }
+    .logout-btn {
+      background: rgba(255,255,255,0.15); border: none; color: #fff;
+      padding: 7px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+    #dept-screen, #links-screen { min-height: 100vh; }
+    .content { padding: 1.8rem 1.6rem; max-width: 1200px; margin: 0 auto; }
+
+    .page-title {
+      font-size: 14px; font-weight: 700; color: #1a237e;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px;
+    }
+    .page-title::before {
+      content: ''; display: inline-block; width: 4px; height: 18px;
+      background: #1a237e; border-radius: 2px;
+    }
+
+    /* LOADING */
+    .loading-box {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 3rem; gap: 16px;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #e0e4f5;
+      border-top-color: #1a237e; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: #666; }
+    .refresh-btn {
+      background: #1a237e; color: #fff; border: none; padding: 8px 20px;
+      border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .refresh-btn:hover { background: #283593; }
+    .last-updated { font-size: 11px; color: #aaa; }
+
+    /* DEPT GRID */
+    .dept-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px;
+    }
+    .dept-card {
+      background: #fff; border: 1.5px solid #e0e4f5; border-radius: 12px;
+      padding: 1.3rem 1rem; text-align: center; cursor: pointer; transition: all 0.18s;
+    }
+    .dept-card:hover {
+      border-color: #1a237e; background: #eef0fc;
+      transform: translateY(-4px); box-shadow: 0 6px 18px rgba(26,35,126,0.13);
+    }
+    .dept-icon { width: 52px; height: 52px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
+    .dept-icon svg { width: 52px; height: 52px; }
+    .dept-name { font-size: 13px; font-weight: 700; color: #1a237e; }
+    .dept-count { font-size: 11px; color: #888; margin-top: 4px; }
+
+    /* LINKS TABLE */
+    .back-btn {
+      background: none; border: 1.5px solid #1a237e; color: #1a237e;
+      padding: 7px 18px; border-radius: 7px; cursor: pointer; font-size: 13px;
+      font-weight: 600; margin-bottom: 1.2rem;
+    }
+    .back-btn:hover { background: #eef0fc; }
+    .dept-heading { font-size: 20px; font-weight: 800; color: #1a237e; margin-bottom: 1.3rem; }
+    .table-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 2px 12px rgba(26,35,126,0.09); }
+    .links-table { width: 100%; border-collapse: collapse; background: #fff; min-width: 750px; }
+    .links-table thead tr { background: #1a237e; color: #fff; }
+    .links-table th { padding: 12px 14px; font-size: 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+    .links-table td { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid #eef0f8; color: #333; vertical-align: top; }
+    .links-table tr:last-child td { border-bottom: none; }
+    .links-table tbody tr:hover td { background: #f3f5fc; }
+    .process-name { font-weight: 700; color: #1a237e; font-size: 12px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px;
+      font-weight: 600; white-space: nowrap; text-decoration: none; border: none; cursor: pointer;
+      transition: all 0.15s; line-height: 1.5;
+    }
+    .chip-sheet  { background: #e3f2fd; color: #0d47a1; }
+    .chip-sheet:hover  { background: #0d47a1; color: #fff; }
+    .chip-form   { background: #e8f5e9; color: #1b5e20; }
+    .chip-form:hover   { background: #1b5e20; color: #fff; }
+    .chip-mis    { background: #fff3e0; color: #bf360c; }
+    .chip-mis:hover    { background: #bf360c; color: #fff; }
+    .chip-video  { background: #fce4ec; color: #880e4f; }
+    .chip-video:hover  { background: #880e4f; color: #fff; }
+    .chip-na     { background: #f5f5f5; color: #bbb; font-style: italic; font-weight: 400; cursor: default; }
+    .chip-pending { background: #fff8e1; color: #f57f17; cursor: default; }
+
+    .dept-icons { 'Assistant':'🧑‍💼','HR':'👥','MDO':'📊','PPIC':'📦','Admin':'🏢','Purchase':'🛒','Accounts':'💰','Store':'🏬','Engineering':'⚙️','QA':'✅','Micro':'🔬','QC':'🧪','SECURITY':'🔐','PRODUCTTION':'🏭','AI Tools':'🤖' }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">S</div>
+    <h2>Salus System Master</h2>
+    <p class="sub">Management Information System</p>
+    <div class="err" id="err-msg">Invalid username or password</div>
+    <input type="text" id="uname" placeholder="Username" autocomplete="off" />
+    <input type="password" id="upass" placeholder="Password" />
+    <button class="btn-login" onclick="doLogin()">Login</button>
+  </div>
+</div>
+
+<!-- DEPT SELECT -->
+<div id="dept-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">S</div>
+      <div>
+        <div class="topbar-title">Salus System Master</div>
+        <div class="topbar-sub">Live — Auto-updates from Google Sheet</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="refresh-btn" onclick="loadSheet()">&#x21bb; Refresh</button>
+      <div class="topbar-user" id="topbar-user"></div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem;">
+      <div class="page-title" style="margin:0">Select Department</div>
+      <div class="last-updated" id="last-updated"></div>
+    </div>
+    <div id="dept-grid" class="dept-grid"></div>
+  </div>
+</div>
+
+<!-- LINKS TABLE -->
+<div id="links-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">S</div>
+      <div>
+        <div class="topbar-title">Salus System Master</div>
+        <div class="topbar-sub" id="topbar-dept-name"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user" id="topbar-user2"></div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="content">
+    <button class="back-btn" onclick="goBack()">&#8592; Back to Departments</button>
+    <div class="dept-heading" id="dept-heading"></div>
+    <div class="table-wrap">
+      <table class="links-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Process</th>
+            <th>Process Incharge</th>
+            <th>Executive</th>
+            <th>FMS</th>
+            <th>IMS Sheet</th>
+            <th>Checklist / Sheets</th>
+            <th>Google Forms</th>
+            <th>MIS Score</th>
+            <th>Training Video</th>
+          </tr>
+        </thead>
+        <tbody id="links-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// USERS — Add your users here
+// ============================================================
+const USERS = [
+  { username: 'admin',   password: 'admin123',  name: 'Admin'    },
+  { username: 'mis',     password: 'mis@2024',  name: 'MIS User' },
+  { username: 'manager', password: 'manager1',  name: 'Manager'  },
+  { username: 'monika',  password: 'monika123', name: 'Monika'   },
+  { username: 'pooja',   password: 'pooja123',  name: 'Pooja'    },
+];
+
+// ============================================================
+// GOOGLE SHEET CSV URL — URL_EXPORT sheet ka link
+// ============================================================
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSddKV201pdu8VOG19UE2CWU_FwXyMEHYTj8HtHW_mozI-iG485YY_AbabqbXr3ufZTDBlV37Nj3wzZ/pub?gid=2004263953&single=true&output=csv';
+
+// Column indexes (0-based) in your sheet:
+// 0=Dept, 1=Process, 2=PC, 3=Incharge, 4=Executive, 5=FMS, 6=IMS, 7=PMS, 8=Checklist, 9=Sheets, 10=Forms, 11=MIS, 12=Video
+const COL = { dept:0, process:1, incharge:3, exec:4, fms:5, ims:6, checklist:8, sheets:9, forms:10, mis:11, video:12 };
+
+const ICONS = {
+  'EA':        `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="18" r="10" fill="#5c6bc0"/><path d="M6 44c0-11 40-11 40 0" fill="#5c6bc0"/><rect x="30" y="28" width="16" height="16" rx="3" fill="#ffd54f"/><text x="38" y="40" font-size="10" text-anchor="middle" fill="#1a237e" font-weight="bold">EA</text></svg>`,
+  'CRM':       `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="44" height="32" rx="5" fill="#5c6bc0"/><path d="M4 18h44" stroke="#fff" stroke-width="2"/><circle cx="16" cy="30" r="5" fill="#ffd54f"/><circle cx="36" cy="30" r="5" fill="#ffd54f"/><path d="M21 30h10" stroke="#fff" stroke-width="2" stroke-dasharray="2 2"/></svg>`,
+  'O2D':       `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="8" width="28" height="36" rx="4" fill="#5c6bc0"/><rect x="10" y="14" width="20" height="3" rx="1.5" fill="#fff"/><rect x="10" y="21" width="20" height="3" rx="1.5" fill="#fff"/><rect x="10" y="28" width="13" height="3" rx="1.5" fill="#fff"/><circle cx="40" cy="36" r="8" fill="#ffd54f"/><path d="M36 36l3 3 5-5" stroke="#1a237e" stroke-width="2" stroke-linecap="round"/></svg>`,
+  'PURCHASE':  `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10h4l6 22h22l4-14H16" stroke="#5c6bc0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="24" cy="38" r="4" fill="#ffd54f"/><circle cx="36" cy="38" r="4" fill="#ffd54f"/><path d="M22 22h12M28 16v12" stroke="#5c6bc0" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  'HR':        `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="16" r="8" fill="#5c6bc0"/><circle cx="36" cy="18" r="6" fill="#9fa8da"/><path d="M4 42c0-9 32-9 32 0" fill="#5c6bc0"/><path d="M34 42c0-7 14-7 14 0" fill="#9fa8da"/></svg>`,
+  'STORES':    `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="22" width="40" height="24" rx="3" fill="#5c6bc0"/><path d="M2 22l10-14h28l10 14" fill="#9fa8da"/><rect x="18" y="30" width="16" height="16" rx="2" fill="#ffd54f"/><rect x="24" y="30" width="4" height="8" rx="1" fill="#5c6bc0"/></svg>`,
+  'FINANCE':   `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="22" fill="#5c6bc0"/><text x="26" y="22" font-size="18" text-anchor="middle" fill="#ffd54f" font-weight="bold">₹</text><rect x="14" y="30" width="6" height="10" rx="1" fill="#fff"/><rect x="23" y="25" width="6" height="15" rx="1" fill="#fff"/><rect x="32" y="20" width="6" height="20" rx="1" fill="#fff"/></svg>`,
+  'IT':        `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="8" width="40" height="28" rx="4" fill="#5c6bc0"/><rect x="10" y="12" width="32" height="20" rx="2" fill="#1a237e"/><rect x="16" y="40" width="20" height="4" rx="2" fill="#9fa8da"/><rect x="10" y="44" width="32" height="3" rx="1.5" fill="#5c6bc0"/><circle cx="36" cy="18" r="3" fill="#ffd54f"/><path d="M14 24l5-5 4 4 5-6" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  'ENGINEERING':`<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="10" fill="none" stroke="#5c6bc0" stroke-width="4"/><circle cx="26" cy="26" r="4" fill="#ffd54f"/><path d="M26 6v8M26 38v8M6 26h8M38 26h8M12 12l6 6M34 34l6 6M12 40l6-6M34 18l6-6" stroke="#5c6bc0" stroke-width="3.5" stroke-linecap="round"/></svg>`,
+  'Assistant': `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="18" r="10" fill="#5c6bc0"/><path d="M6 44c0-11 40-11 40 0" fill="#5c6bc0"/><rect x="30" y="28" width="16" height="16" rx="3" fill="#ffd54f"/><text x="38" y="40" font-size="10" text-anchor="middle" fill="#1a237e" font-weight="bold">EA</text></svg>`,
+  'MDO':       `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="44" height="32" rx="5" fill="#5c6bc0"/><path d="M4 18h44" stroke="#fff" stroke-width="2"/><circle cx="16" cy="30" r="5" fill="#ffd54f"/><circle cx="36" cy="30" r="5" fill="#ffd54f"/><path d="M21 30h10" stroke="#fff" stroke-width="2" stroke-dasharray="2 2"/></svg>`,
+  'PPIC':      `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="8" width="28" height="36" rx="4" fill="#5c6bc0"/><rect x="10" y="14" width="20" height="3" rx="1.5" fill="#fff"/><rect x="10" y="21" width="20" height="3" rx="1.5" fill="#fff"/><rect x="10" y="28" width="13" height="3" rx="1.5" fill="#fff"/><circle cx="40" cy="36" r="8" fill="#ffd54f"/><path d="M36 36l3 3 5-5" stroke="#1a237e" stroke-width="2" stroke-linecap="round"/></svg>`,
+  'Admin':     `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="22" width="40" height="24" rx="3" fill="#5c6bc0"/><path d="M2 22l10-14h28l10 14" fill="#9fa8da"/><rect x="18" y="30" width="16" height="16" rx="2" fill="#ffd54f"/><rect x="24" y="30" width="4" height="8" rx="1" fill="#5c6bc0"/></svg>`,
+  'Purchase':  `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10h4l6 22h22l4-14H16" stroke="#5c6bc0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="24" cy="38" r="4" fill="#ffd54f"/><circle cx="36" cy="38" r="4" fill="#ffd54f"/><path d="M22 22h12M28 16v12" stroke="#5c6bc0" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  'Accounts':  `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="22" fill="#5c6bc0"/><text x="26" y="22" font-size="18" text-anchor="middle" fill="#ffd54f" font-weight="bold">₹</text><rect x="14" y="30" width="6" height="10" rx="1" fill="#fff"/><rect x="23" y="25" width="6" height="15" rx="1" fill="#fff"/><rect x="32" y="20" width="6" height="20" rx="1" fill="#fff"/></svg>`,
+  'Store':     `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="22" width="40" height="24" rx="3" fill="#5c6bc0"/><path d="M2 22l10-14h28l10 14" fill="#9fa8da"/><rect x="18" y="30" width="16" height="16" rx="2" fill="#ffd54f"/><rect x="24" y="30" width="4" height="8" rx="1" fill="#5c6bc0"/></svg>`,
+  'Engineering':`<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="10" fill="none" stroke="#5c6bc0" stroke-width="4"/><circle cx="26" cy="26" r="4" fill="#ffd54f"/><path d="M26 6v8M26 38v8M6 26h8M38 26h8M12 12l6 6M34 34l6 6M12 40l6-6M34 18l6-6" stroke="#5c6bc0" stroke-width="3.5" stroke-linecap="round"/></svg>`,
+  'QA':        `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26 4l20 8v14c0 12-8 20-20 24C6 46 6 38 6 26V12z" fill="#5c6bc0"/><path d="M16 26l7 7 13-13" stroke="#ffd54f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  'Micro':     `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="4" width="8" height="24" rx="4" fill="#5c6bc0"/><rect x="18" y="8" width="16" height="16" rx="8" fill="none" stroke="#9fa8da" stroke-width="3"/><path d="M26 28v12M16 40h20" stroke="#5c6bc0" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="36" r="8" fill="#ffd54f" opacity="0.8"/><path d="M35 33l6 6M41 33l-6 6" stroke="#1a237e" stroke-width="2" stroke-linecap="round"/></svg>`,
+  'QC':        `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 6h20v10l4 8v18H12V24l4-8V6z" fill="#9fa8da"/><path d="M16 6h20v10l4 8v18H12V24l4-8V6z" fill="#5c6bc0" opacity="0.7"/><ellipse cx="26" cy="32" rx="8" ry="8" fill="#ffd54f"/><path d="M22 32l3 3 5-5" stroke="#1a237e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  'SECURITY':  `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26 4l20 8v14c0 12-8 20-20 24C6 46 6 38 6 26V12z" fill="#5c6bc0"/><circle cx="26" cy="24" r="6" fill="#ffd54f"/><rect x="22" y="30" width="8" height="10" rx="2" fill="#ffd54f"/></svg>`,
+  'PRODUCTTION':`<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="28" width="44" height="18" rx="3" fill="#5c6bc0"/><rect x="8" y="16" width="10" height="14" rx="2" fill="#9fa8da"/><rect x="22" y="10" width="10" height="20" rx="2" fill="#9fa8da"/><rect x="36" y="20" width="8" height="10" rx="2" fill="#9fa8da"/><path d="M8 28c2-8 4-8 6-12M22 28c2-8 3-10 5-16M36 28c1-4 2-5 4-8" stroke="#ffd54f" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  'AI Tools':  `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="36" height="36" rx="8" fill="#5c6bc0"/><circle cx="20" cy="22" r="4" fill="#ffd54f"/><circle cx="32" cy="22" r="4" fill="#ffd54f"/><path d="M16 34c0-4 20-4 20 0" stroke="#ffd54f" stroke-width="2.5" stroke-linecap="round" fill="none"/><path d="M26 4v6M26 42v6M4 26h6M42 26h6" stroke="#9fa8da" stroke-width="2" stroke-linecap="round"/></svg>`
+};
+
+let sheetData = {};
+let currentUser = null;
+let currentDept = null;
+
+// ============================================================
+// CSV PARSER
+// ============================================================
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (let line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let inQ = false, cur = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+// ============================================================
+// LOAD SHEET DATA
+// ============================================================
+async function loadSheet() {
+  const grid = document.getElementById('dept-grid');
+  grid.innerHTML = `<div class="loading-box" style="grid-column:1/-1">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading data from Google Sheet...</div>
+  </div>`;
+
+  // Try multiple methods to fetch CSV
+  const urls = [
+    CSV_URL + '&t=' + Date.now(),
+    'https://corsproxy.io/?' + encodeURIComponent(CSV_URL),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(CSV_URL),
+  ];
+
+  let text = null;
+  for (let url of urls) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (res.ok) {
+        text = await res.text();
+        if (text && text.length > 50) break;
+      }
+    } catch(e) { continue; }
+  }
+
+  if (!text || text.length < 50) {
+    grid.innerHTML = `<div class="loading-box" style="grid-column:1/-1">
+      <div style="color:#c62828;font-size:14px;font-weight:600;">⚠️ Failed to load sheet</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">This dashboard must be opened from <strong>GitHub Pages</strong>, not a local file.</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">Local files (C:/...) cannot fetch Google Sheets due to browser security.</div>
+      <button class="refresh-btn" style="margin-top:12px" onclick="loadSheet()">&#x21bb; Try Again</button>
+    </div>`;
+    return;
+  }
+
+  try {
+    const rows = parseCSV(text);
+    sheetData = {};
+    let currentDeptName = '';
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 4) continue;
+      const deptCell = row[COL.dept] ? row[COL.dept].trim() : '';
+      if (deptCell) currentDeptName = deptCell;
+      if (!currentDeptName) continue;
+      if (!sheetData[currentDeptName]) sheetData[currentDeptName] = [];
+      sheetData[currentDeptName].push(row);
+    }
+    buildDepts();
+    const now = new Date();
+    document.getElementById('last-updated').textContent =
+      'Last updated: ' + now.toLocaleTimeString('en-IN');
+  } catch (e) {
+    grid.innerHTML = `<div class="loading-box" style="grid-column:1/-1">
+      <div style="color:#c62828;font-size:14px;font-weight:600;">⚠️ Failed to load sheet</div>
+      <div style="font-size:12px;color:#888;">Please check your internet connection or republish the sheet</div>
+      <button class="refresh-btn" onclick="loadSheet()">&#x21bb; Try Again</button>
+    </div>`;
+  }
+}
+
+// ============================================================
+// BUILD DEPARTMENTS
+// ============================================================
+function buildDepts() {
+  const grid = document.getElementById('dept-grid');
+  grid.innerHTML = '';
+  Object.entries(sheetData).forEach(([dept, rows]) => {
+    const icon = ICONS[dept] || `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 14h16l4 5h20v23H6z" fill="#5c6bc0"/><path d="M6 19h40v23H6z" fill="#9fa8da"/></svg>`;
+    const card = document.createElement('div');
+    card.className = 'dept-card';
+    card.innerHTML = `<div class="dept-icon">${icon}</div>
+      <div class="dept-name">${dept}</div>
+      <div class="dept-count">${rows.length} process${rows.length !== 1 ? 'es' : ''}</div>`;
+    card.onclick = () => openDept(dept);
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// CHIP RENDERER
+// ============================================================
+// Extract a readable label from Google Sheets/Forms URL
+function labelFromUrl(url, type, colName) {
+  // If colName given use it as label
+  if (colName && colName.trim() && colName.toUpperCase() !== 'NA') return colName.trim();
+  if (url.includes('forms.gle') || url.includes('/forms/')) return 'Open Form';
+  if (url.includes('youtu')) return 'Watch Video';
+  if (url.includes('drive.google') && url.includes('/file/')) return 'Open File';
+  if (url.includes('drive.google') && url.includes('/drive/')) return 'Open Drive';
+  return 'Open Sheet';
+}
+
+function chip(url, type, label) {
+  if (!url || url.trim() === '' || url.trim().toUpperCase() === 'NA') {
+    return '<span class="chip chip-na">NA</span>';
+  }
+  if (url.trim().toLowerCase() === 'pending') {
+    return '<span class="chip chip-pending">⏳ Pending</span>';
+  }
+
+  const isURL = url.trim().startsWith('http://') || url.trim().startsWith('https://');
+  if (isURL) {
+    let cls, icon;
+    if (type === 'forms' || url.includes('forms.gle') || url.includes('/forms/')) {
+      cls = 'chip-form'; icon = '📋';
+    } else if (type === 'mis') {
+      cls = 'chip-mis'; icon = '📊';
+    } else if (type === 'video' || url.includes('youtu')) {
+      cls = 'chip-video'; icon = '▶';
+    } else if (url.includes('drive.google') && url.includes('/file/')) {
+      cls = 'chip-video'; icon = '📁';
+    } else {
+      cls = 'chip-sheet'; icon = '🔗';
+    }
+    const displayLabel = label || labelFromUrl(url, type, '');
+    return `<a class="chip ${cls}" href="${url.trim()}" target="_blank" rel="noopener">${icon} ${displayLabel}</a>`;
+  }
+
+  // Plain text (not a URL) — show as-is
+  return `<span class="chip chip-na">${url.trim()}</span>`;
+}
+
+function multiChip(val, type, label) {
+  if (!val || val.trim() === '') return '<span class="chip chip-na">NA</span>';
+  return chip(val.trim(), type, label);
+}
+
+// ============================================================
+// OPEN DEPARTMENT
+// ============================================================
+function openDept(dept) {
+  currentDept = dept;
+  const rows = sheetData[dept] || [];
+  const icon = ICONS[dept] || '';
+  document.getElementById('dept-heading').innerHTML = `<span style="display:inline-flex;align-items:center;gap:12px;vertical-align:middle">${icon}&nbsp;${dept}</span>`;
+  document.getElementById('topbar-dept-name').textContent = dept + ' Department';
+
+  const tbody = document.getElementById('links-tbody');
+  tbody.innerHTML = rows.map((r, i) => `<tr>
+    <td style="color:#bbb;font-size:11px">${i + 1}</td>
+    <td><div class="process-name">${r[COL.process] || ''}</div></td>
+    <td style="font-size:12px;font-weight:600">${r[COL.incharge] || ''}</td>
+    <td style="font-size:12px;color:#666">${r[COL.exec] || ''}</td>
+    <td><div class="chips">${multiChip(r[COL.fms], 'fms', r[COL.process] ? r[COL.process]+' FMS' : '')}</div></td>
+    <td><div class="chips">${multiChip(r[COL.ims], 'ims', r[COL.process] ? r[COL.process]+' IMS' : '')}</div></td>
+    <td><div class="chips">
+      ${multiChip(r[COL.checklist], 'sheet', r[COL.checklist] && !r[COL.checklist].startsWith('http') ? r[COL.checklist] : 'Checklist')}
+      ${r[COL.sheets] && r[COL.sheets].trim() && r[COL.sheets].trim() !== r[COL.checklist].trim() ? multiChip(r[COL.sheets], 'sheet', r[COL.sheets] && !r[COL.sheets].startsWith('http') ? r[COL.sheets] : 'Sheet') : ''}
+    </div></td>
+    <td><div class="chips">${multiChip(r[COL.forms], 'forms', r[COL.process] ? r[COL.process]+' Form' : '')}</div></td>
+    <td><div class="chips">${multiChip(r[COL.mis], 'mis', r[COL.process] ? r[COL.process]+' MIS' : '')}</div></td>
+    <td><div class="chips">${multiChip(r[COL.video], 'video', 'Watch Video')}</div></td>
+  </tr>`).join('');
+
+  show('links-screen');
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function doLogin() {
+  const u = document.getElementById('uname').value.trim();
+  const p = document.getElementById('upass').value.trim();
+  const user = USERS.find(x => x.username.toLowerCase() === u.toLowerCase() && x.password === p);
+  if (!user) { document.getElementById('err-msg').style.display = 'block'; return; }
+  document.getElementById('err-msg').style.display = 'none';
+  currentUser = user;
+  const w = 'Welcome, ' + user.name;
+  document.getElementById('topbar-user').textContent = w;
+  document.getElementById('topbar-user2').textContent = w;
+  show('dept-screen');
+  loadSheet();
+}
+['uname','upass'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
+);
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('uname').value = '';
+  document.getElementById('upass').value = '';
+  show('login-screen');
+}
+
+function goBack() { show('dept-screen'); }
+</script>
+</body>
+</html>
